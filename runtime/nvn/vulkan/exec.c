@@ -997,6 +997,26 @@ static void begin_pass(void) {
         static bool logged_none;
         if (!logged_none) logged_none = true, LOG("[vk] pass with no attachments (%d color slots bound)\n", st.rt.ncolor);
     }
+    // A pass with depth / stencil but no color attachment gets a throwaway one on Intel (LARECOMP_VK_PLACEHOLDER_COLOR=0 /
+    // 1 overrides): the UHD 630's Windows driver (Vulkan 1.3.215) crashes in the vkCmdBeginRendering after such a pass,
+    // reading near a null pointer (issues #8, #46). Pipelines and clears follow pass_ncolor / pass_color as usual.
+    static int placeholder = -1;
+    if (placeholder < 0) {
+        const char *e = getenv("LARECOMP_VK_PLACEHOLDER_COLOR");
+        placeholder = e ? atoi(e) != 0 : g_vk.props.vendorID == 0x8086;
+    }
+    bool placed = false;
+    if (placeholder && !pass_ncolor && (has_d || has_s)) {
+        VkImageView v = vk_dummy_color_view(minw, minh, pass_samples);
+        if (v) {
+            ca[0] = (VkRenderingAttachmentInfo){.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO, .imageView = v,
+                                                .imageLayout = VK_IMAGE_LAYOUT_GENERAL, .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                                                .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE};
+            pass_color[0] = VK_FORMAT_R8_UNORM;
+            pass_ncolor = 1;
+            placed = true;
+        }
+    }
     pass_w = minw; pass_h = minh;
     VkRenderingInfo ri = {.sType = VK_STRUCTURE_TYPE_RENDERING_INFO, .renderArea = {{0, 0}, {minw, minh}}, .layerCount = 1,
                           .colorAttachmentCount = pass_ncolor, .pColorAttachments = pass_ncolor ? ca : NULL,
@@ -1011,8 +1031,16 @@ static void begin_pass(void) {
     if (log_passes > 0) {
         log_passes--;
         LOG("[vk] pass %ux%u: %u color", minw, minh, pass_ncolor);
-        for (uint32_t i = 0; i < pass_ncolor; i++) LOG(" [%u: fmt %d view %s %s]", i, pass_color[i], ca[i].imageView ? "yes" : "none",
-                                                       ca[i].loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR ? "clear" : "load");
+        for (uint32_t i = 0; i < pass_ncolor; i++) {
+            TexBackend *b = !placed && st.rt.color[i] ? st.rt.color[i]->backend : NULL;
+            LOG(" [%u: fmt %d view %s %s", i, pass_color[i], ca[i].imageView ? "yes" : "none", placed ? "placeholder"
+                : ca[i].loadOp == VK_ATTACHMENT_LOAD_OP_CLEAR ? "clear" : "load");
+            // (the image under it: its own format, size, levels / layers, samples; the view's first level and layer)
+            if (b) LOG(", image fmt %d %ux%u lv %u ly %u s %u, view lv %u ly %u", b->format, b->width, b->height, b->levels,
+                       b->layers, b->samples, st.rt.has_cview[i] && (st.rt.cview[i].setmask & 1) ? st.rt.cview[i].base_level : 0,
+                       st.rt.has_cview[i] && (st.rt.cview[i].setmask & 2) ? st.rt.cview[i].min_layer : 0);
+            LOG("]");
+        }
         if (has_d || has_s)
             LOG(", depth %s fmt %d, stencil %s fmt %d (same view %s, layout %d, load op %d / %d)", has_d ? "yes" : "no",
                 pass_depth, has_s ? "yes" : "no", pass_stencil, has_d && has_s && da.imageView == sa.imageView ? "yes" : "no",

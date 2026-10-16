@@ -780,6 +780,30 @@ VkImageView vk_dummy_view(int textype) {
     return views[textype];
 }
 
+// Throwaway color attachment for passes that have none (exec.c begin_pass, Intel only): R8, at least w x h, never
+// sampled; its contents are don't-care. One per size and sample count, kept for the run (passes reuse a few sizes).
+VkImageView vk_dummy_color_view(uint32_t w, uint32_t h, uint32_t samples) {
+    static struct { uint32_t w, h, samples; TexBackend b; VkImageView v; } cache[16];
+    static int n;
+    for (int i = 0; i < n; i++)
+        if (cache[i].w >= w && cache[i].h >= h && cache[i].samples == samples) return cache[i].v;
+    if (n == 16) return VK_NULL_HANDLE;
+    TexBackend *b = &cache[n].b;
+    VkImageCreateInfo ci = {.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, .imageType = VK_IMAGE_TYPE_2D,
+                            .format = VK_FORMAT_R8_UNORM, .extent = {w, h, 1}, .mipLevels = 1, .arrayLayers = 1,
+                            .samples = (VkSampleCountFlagBits)samples, .tiling = VK_IMAGE_TILING_OPTIMAL,
+                            .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT};
+    VmaAllocationCreateInfo ai = {.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE};
+    if (vmaCreateImage(g_vk.vma, &ci, &ai, &b->image, &b->mem, NULL) != VK_SUCCESS) return VK_NULL_HANDLE;
+    vk_image_init_layout(vk_upload_cmd(), b->image, VK_IMAGE_ASPECT_COLOR_BIT);
+    b->format = VK_FORMAT_R8_UNORM;
+    b->width = w; b->height = h; b->levels = b->layers = 1; b->samples = samples;
+    cache[n].v = vk_image_view(b, VK_IMAGE_VIEW_TYPE_2D, b->format, 0, 1, 0, 1, IDENTITY, VK_IMAGE_ASPECT_COLOR_BIT);
+    cache[n].w = w; cache[n].h = h; cache[n].samples = samples;
+    LOG("[vk] placeholder color attachment %ux%u (samples %u) for passes without one\n", w, h, samples);
+    return cache[n++].v;
+}
+
 // ================================================================== samplers
 static VkCompareOp compare_op(uint32_t f) {
     switch (f) {
