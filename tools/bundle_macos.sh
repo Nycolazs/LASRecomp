@@ -19,6 +19,7 @@ VERSION=$(sed -n 's/^#define LARECOMP_VERSION "\(.*\)"/\1/p' runtime/ui/launcher
 case "$VERSION" in
     beta_*) VERSION="0.9.${VERSION#beta_}" ;;
     v*) VERSION="${VERSION#v}" ;;
+    test-*) VERSION="0.0.1" ;;  # (a test build: a valid bundle version, below every release)
 esac
 HELPER=build/helper/rando-gen
 GEN_HELPER=build/helper/lasgen

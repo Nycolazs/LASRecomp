@@ -84,7 +84,9 @@ static void save_png(id<MTLTexture> tex, const char *path) {
 
 static const uint8_t BUILD_ID[8] = {0xae, 0x16, 0xf7, 0x1e, 0x00, 0x2a, 0xf8, 0xcb};  // Link's Awakening v1.0.0 main
 // The release tag this build is (also names the release files; Makefile / tools/bundle_macos.sh / make_dmg.sh read
-// it): beta_<n> until 1.0, then v<major>.<minor>.<patch>.
+// it): beta_<n> until 1.0, then v<major>.<minor>.<patch>. A test build (a pre-release for a few players to try a fix)
+// is test-<name>: the start screen says "Test build <name>" and doesn't check for updates - its players go back to
+// the normal release when it's out.
 #define LARECOMP_VERSION "beta_4"
 
 // ------------------------------------------------------------------ update check
@@ -108,6 +110,7 @@ static std::string tag_label(const std::string &t, bool with_word) {
     int n;
     char end;
     if (sscanf(t.c_str(), "beta_%d%c", &n, &end) == 1) return "Beta " + std::to_string(n);
+    if (!t.compare(0, 5, "test-")) return "Test build " + t.substr(5);
     std::string v = t.size() > 1 && t[0] == 'v' ? t.substr(1) : t;
     return with_word ? "Version " + v : v;
 }
@@ -116,6 +119,7 @@ static std::string g_update_tag;  // a newer release's tag (g_update_lock)
 static pthread_mutex_t g_update_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static void *update_thread(void *) {
+    if (!strncmp(LARECOMP_VERSION, "test-", 5)) return NULL;  // (a test build: no update offers)
     std::string body;
     if (const char *t = getenv("LARECOMP_UPDATE_TAGS")) {  // (test) "beta_2,v1.0.0": these releases, no network
         for (const char *p = t; *p;) {
