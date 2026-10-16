@@ -87,7 +87,7 @@ static const uint8_t BUILD_ID[8] = {0xae, 0x16, 0xf7, 0x1e, 0x00, 0x2a, 0xf8, 0x
 // it): beta_<n> until 1.0, then v<major>.<minor>.<patch>. A test build (a pre-release for a few players to try a fix)
 // is test-<name>: the start screen says "Test build <name>" and doesn't check for updates - its players go back to
 // the normal release when it's out.
-#define LARECOMP_VERSION "beta_4"
+#define LARECOMP_VERSION "test-intel-2"
 
 // ------------------------------------------------------------------ update check
 // The start screen asks GitHub for the project's releases once per launch (a background curl, which macOS and
