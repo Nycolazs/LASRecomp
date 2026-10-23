@@ -749,8 +749,8 @@ static int onedrive_notice(float s, float w, bool ready) {
     ImGui::PopStyleVar(2);
     ImGui::PopStyleColor();
     ImGui::PushTextWrapPos(0);
-    ImGui::TextColored(ImVec4(1, 0.72f, 0.4f, 1), "!  This folder is synced by OneDrive");
-    ImGui::TextColored(ImVec4(0.86f, 0.85f, 0.80f, 1), "All game files (about %.0f GB) will be uploaded to your OneDrive.",
+    ImGui::TextColored(ImVec4(1, 0.72f, 0.4f, 1), "!  %s", T("This folder is synced by OneDrive"));
+    ImGui::TextColored(ImVec4(0.86f, 0.85f, 0.80f, 1), T("All game files (about %.0f GB) will be uploaded to your OneDrive."),
                        fmax(1.0, gb));
     ImGui::PopTextWrapPos();
     ImGui::Dummy(ImVec2(0, 4 * s));
@@ -760,11 +760,11 @@ static int onedrive_notice(float s, float w, bool ready) {
     pthread_mutex_unlock(&g_lock);
     if (!rt_data_root_fixed()) {
         ImGui::BeginDisabled(busy);
-        if (ImGui::Button("Choose another folder")) r = 2;
+        if (ImGui::Button(T("Choose another folder"))) r = 2;
         ImGui::EndDisabled();
         ImGui::SameLine();
     }
-    if (ImGui::Button("Keep here")) r = 1;
+    if (ImGui::Button(T("Keep here"))) r = 1;
     ImGui::EndChild();
     return r;
 }
@@ -1022,7 +1022,7 @@ static bool menu_tip(float s) {
         ImGui::Dummy(ImVec2(0, 14 * s));
         ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 180 * s) * 0.5f);
         ImGui::SetItemDefaultFocus();
-        if (ImGui::Button("OK", ImVec2(180 * s, 44 * s)) || ImGui::IsKeyPressed(ImGuiKey_Enter) ||
+        if (ImGui::Button(T("OK"), ImVec2(180 * s, 44 * s)) || ImGui::IsKeyPressed(ImGuiKey_Enter) ||
             ImGui::IsKeyPressed(ImGuiKey_GamepadFaceDown)) {
             g_settings.menu_tip_seen = true;
             settings_save();
@@ -1431,7 +1431,7 @@ static void data_folder_popup(float s) {
     ImVec2 bw(240 * sc, 0);
     ImGui::PushFont(g_font_small);
     ImGui::PushFont(g_font_menu);
-    ImGui::TextColored(ImVec4(0.93f, 0.76f, 0.33f, 1), g_df == DF_MOVING ? "Moving your data" : "Data folder");
+    ImGui::TextColored(ImVec4(0.93f, 0.76f, 0.33f, 1), "%s", T(g_df == DF_MOVING ? "Moving your data" : "Data folder"));
     ImGui::PopFont();
     ImGui::PushTextWrapPos(900 * sc);
     bool close = false, esc = ImGui::IsKeyPressed(ImGuiKey_GamepadFaceRight, false) || ImGui::IsKeyPressed(ImGuiKey_Escape, false);
@@ -1443,25 +1443,25 @@ static void data_folder_popup(float s) {
     };
     if (g_df == DF_ASK) {
         ImGui::TextDisabled("%s", t.path);
-        if (g_df_onedrive) ImGui::TextColored(ImVec4(1, 0.72f, 0.4f, 1), "This folder is synced by OneDrive too.");
+        if (g_df_onedrive) ImGui::TextColored(ImVec4(1, 0.72f, 0.4f, 1), "%s", T("This folder is synced by OneDrive too."));
         ImGui::Spacing();
         if (t.refuse[0]) {
             ImGui::TextColored(red, "%s", t.refuse);
             ImGui::Spacing();
-            close = ImGui::Button("OK", bw) || esc;
+            close = ImGui::Button(T("OK"), bw) || esc;
         } else if (t.has_data) {
-            ImGui::Text("This folder already has LAS Recomp data. Use it?");
+            ImGui::TextUnformatted(T("This folder already has LAS Recomp data. Use it?"));
             ImGui::Spacing();
-            if (ImGui::Button("Use it", bw) || g_df_auto_fresh) g_df_auto_fresh = false, use_it();
+            if (ImGui::Button(T("Use it"), bw) || g_df_auto_fresh) g_df_auto_fresh = false, use_it();
             ImGui::SameLine();
-            close = ImGui::Button("Cancel", bw) || esc;
+            close = ImGui::Button(T("Cancel"), bw) || esc;
         } else {
             bool room = t.free >= t.need;
-            ImGui::Text("Move your saves, seeds, settings and game files (%.1f GB) there, or start fresh?", t.bytes / 1e9);
-            if (!room) ImGui::TextColored(red, "Not enough free space there to move them (%.1f GB free).", t.free / 1e9);
+            ImGui::Text(T("Move your saves, seeds, settings and game files (%.1f GB) there, or start fresh?"), t.bytes / 1e9);
+            if (!room) ImGui::TextColored(red, T("Not enough free space there to move them (%.1f GB free)."), t.free / 1e9);
             ImGui::Spacing();
             ImGui::BeginDisabled(!room);
-            if ((ImGui::Button("Move", bw) || g_df_auto_move) && room) {
+            if ((ImGui::Button(T("Move"), bw) || g_df_auto_move) && room) {
                 g_df_auto_move = false;
                 stop_background_prep();
                 settings_save();
@@ -1472,24 +1472,24 @@ static void data_folder_popup(float s) {
             }
             ImGui::EndDisabled();
             ImGui::SameLine();
-            if (ImGui::Button("Start fresh", bw) || g_df_auto_fresh) g_df_auto_fresh = false, use_it();
+            if (ImGui::Button(T("Start fresh"), bw) || g_df_auto_fresh) g_df_auto_fresh = false, use_it();
             ImGui::SameLine();
             ImGui::SetItemDefaultFocus();
-            close = ImGui::Button("Cancel", bw) || esc;
+            close = ImGui::Button(T("Cancel"), bw) || esc;
         }
     } else if (g_df == DF_MOVING) {
         static const char *const steps[] = {"Copying...", "Checking the copy...", "Removing the old copy..."};
         int r = g_df_result, k = g_df_step;
-        ImGui::Text("%s", r == 1 ? "Restarting..." : steps[k < 0 ? 0 : k > 2 ? 2 : k]);
+        ImGui::TextUnformatted(T(r == 1 ? "Restarting..." : steps[k < 0 ? 0 : k > 2 ? 2 : k]));
         ImGui::ProgressBar(r == 1 ? 1.0f : g_df_frac.load(), ImVec2(900 * sc, 0));
         ImGui::TextDisabled("%s", t.path);
         if (r == 1) df_restart();
         else if (r == -1) g_df = DF_FAILED;
     } else {
         ImGui::TextColored(red, "%s", g_df_err);
-        ImGui::Text("Your data is still in %s", rt_data_root());
+        ImGui::Text(T("Your data is still in %s"), rt_data_root());
         ImGui::Spacing();
-        close = ImGui::Button("OK", bw) || esc;
+        close = ImGui::Button(T("OK"), bw) || esc;
     }
     ImGui::PopTextWrapPos();
     ImGui::PopFont();
@@ -1598,7 +1598,7 @@ static void prelaunch_tab(float sc) {
     ImGui::PopTextWrapPos();
     const char *fixed = rt_data_root_fixed();
     ImGui::BeginDisabled(fixed != NULL);
-    if (ImGui::Button("Change...")) choose_data_folder();
+    if (ImGui::Button(T("Change..."))) choose_data_folder();
     ImGui::EndDisabled();
     if (fixed) ImGui::SameLine(), ImGui::TextDisabled("%s", fixed);
     ImGui::Spacing();

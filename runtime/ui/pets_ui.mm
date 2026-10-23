@@ -18,14 +18,14 @@ extern "C" void pets_ui_draw(void) {
     for (int i = 0; i < n; i++) any_pet |= c[i] >= 2;  // (Marin / Ghost / Rooster: BowWow alone isn't a pet)
     if (!any_pet) return;
     ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Companion:");
+    ImGui::TextUnformatted(T("Companion:"));
     for (int i = -1; i < n; i++) {
         int v = i < 0 ? 0 : c[i];
         ImGui::SameLine();
         ImGui::PushID(v);
-        if (ImGui::RadioButton(v ? pets_name(v) : "None", cur == v)) pets_call(v);
+        if (ImGui::RadioButton(v ? T(pets_name(v)) : T("None"), cur == v)) pets_call(v);
         ImGui::PopID();
     }
     ImGui::SameLine();
-    ImGui::TextDisabled("(also on the pause menu's Items page: LEFT from the item grid)");
+    ImGui::TextDisabled("%s", T("(also on the pause menu's Items page: LEFT from the item grid)"));
 }

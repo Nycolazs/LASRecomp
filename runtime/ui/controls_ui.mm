@@ -221,7 +221,7 @@ static void configure_inputs(float scale) {
             }
         }
         g_in_right = in_right;
-        if (cd == dev) ImGui::TextDisabled("Esc cancels.");
+        if (cd == dev) ImGui::TextDisabled("%s", T("Esc cancels."));
         else if (msg[0]) ImGui::TextDisabled("%s", msg);
     }
     opt_split_end();

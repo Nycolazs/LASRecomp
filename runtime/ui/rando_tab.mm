@@ -879,7 +879,7 @@ extern "C" void rando_tab_draw(float scale) {
             ImGui::TextUnformatted(T("With the entrance randomizer on, at least one kind of entrance must be shuffled."));
             ImGui::Spacing();
             ImGui::SetItemDefaultFocus();
-            if (ImGui::Button("OK", ImVec2(220 * scale, 0)) || ImGui::IsKeyPressed(ImGuiKey_GamepadFaceRight, false) ||
+            if (ImGui::Button(T("OK"), ImVec2(220 * scale, 0)) || ImGui::IsKeyPressed(ImGuiKey_GamepadFaceRight, false) ||
                 ImGui::IsKeyPressed(ImGuiKey_Escape, false))
                 ImGui::CloseCurrentPopup();
             ImGui::EndPopup();
@@ -994,7 +994,7 @@ extern "C" void rando_tab_draw(float scale) {
         }
         opt_split();
         ImGui::SetWindowFontScale(1.3f);  // (as the descriptions)
-        ImGui::TextWrapped("How many pieces finish the game: 1 to 50.");
+        ImGui::TextWrapped("%s", T("How many pieces finish the game: 1 to 50."));
         ImGui::SetWindowFontScale(1.0f);
         ImGui::Spacing();
         opt_section("Custom");
