@@ -55,12 +55,25 @@ int rt_delegate_null(Cpu *c, int slot) {
             plat_sleep_until_ns(plat_now_ns() + 50000);
         }
     }
+    bool recovered = false;
+    // A stale chain-job release can be the only wakeup after its original release was skipped (#23).
+    if (!forwarded && vt == GA(DELEGATE_JOB_VTABLE_BASE) && in_owner && !rd64(obj + 0x10) &&
+        rd32(obj + 0x20) == 1 && !rd32(owner + 0x1f8)) {
+        uint8_t expected = 0;
+        if (__atomic_compare_exchange_n((uint8_t *)(uintptr_t)(owner + 0x1d8), &expected, 1, false,
+                                        __ATOMIC_RELEASE, __ATOMIC_RELAXED)) {
+            c->x[0] = owner + 0x204;
+            guest_call(c, guest_sym("_ZNSt3__118condition_variable10notify_oneEv"));
+            recovered = true;
+        }
+    }
     static int logged;
     if (logged++ < 16)
         LOG("[delegate] %#llx slot +0x%x: no delegate at [this+0x10] (vtable %#llx, count %#x, lr %#llx, owner %#llx done %d "
             "lock %#x) - %s after %llu us (issue #19)\n", (unsigned long long)obj, slot, (unsigned long long)vt, rd32(obj + 0x20),
             (unsigned long long)c->x[30], (unsigned long long)owner, in_owner ? *(uint8_t *)(uintptr_t)(owner + 0x1d8) : -1,
-            in_owner ? rd32(owner + 0x1f8) : 0, forwarded ? "forwarded" : "skipped", (unsigned long long)(waited / 1000));
+            in_owner ? rd32(owner + 0x1f8) : 0, forwarded ? "forwarded" : recovered ? "recovered" : "skipped",
+            (unsigned long long)(waited / 1000));
     if (forwarded) return 0;
     c->x[0] = 0;  // (returns 0, as slot +0x38 does when its delegate is missing: x0 is the delegate it loaded)
     return 1;

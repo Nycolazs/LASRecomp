@@ -317,7 +317,7 @@ bool opt_colour(const char *label, CosColour *c, int slot, const char *desc) {
             c->rgb = (uint32_t)lroundf(f[0] * 255) << 16 | (uint32_t)lroundf(f[1] * 255) << 8 | (uint32_t)lroundf(f[2] * 255);
             changed = true;
         }
-        if (ImGui::Button("Done") || ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+        if (ImGui::Button(T("Done")) || ImGui::IsKeyPressed(ImGuiKey_Escape, false))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }

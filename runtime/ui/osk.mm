@@ -146,7 +146,7 @@ int osk_keys(char *text, size_t cap, int max_chars, bool appearing, float scale,
         if (ImGui::Button(T("Cancel"), ImVec2(w2, k))) r = -1;
         ImGui::SameLine();
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.80f, 0.60f, 0.15f, 0.85f));
-        if (ImGui::Button("OK", ImVec2(w2, k))) r = 1;
+        if (ImGui::Button(T("OK"), ImVec2(w2, k))) r = 1;
         ImGui::PopStyleColor();
         ImGui::TextDisabled(T("Tap the letters, then OK      (%d / %d)"), len, max_chars);
         return r;
@@ -159,7 +159,7 @@ int osk_keys(char *text, size_t cap, int max_chars, bool appearing, float scale,
     ImGui::SameLine();
     if (ImGui::Button(T("Cancel"), ImVec2(k * 2, k))) r = -1;
     ImGui::SameLine();
-    if (ImGui::Button("OK", ImVec2(k * 2, k))) r = 1;
+    if (ImGui::Button(T("OK"), ImVec2(k * 2, k))) r = 1;
     ImGui::TextDisabled(T("%s  type      %s  delete      %s  OK      (%d / %d)"), ui_pad_confirm_label(), ui_pad_back_label(),
                         ui_pad_start_label(), len, max_chars);
     return r;
