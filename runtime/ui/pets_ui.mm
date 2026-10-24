@@ -2,6 +2,7 @@
 // same choice as the Items page's companion slot, runtime/ui/inventory_overlay.mm; the swap happens at once).
 // Shown once a pet has been found on a seed with pets (tools/rando/pets.py).
 #include "imgui.h"
+#include "i18n.h"
 
 extern "C" {
 int game_in_play(void);
